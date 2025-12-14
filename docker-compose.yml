@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: skyscraping-app
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      # Common Postgres envs for future use by the app
+      - PGHOST=db
+      - PGPORT=5432
+      - PGUSER=appuser
+      - PGPASSWORD=apppass
+      - PGDATABASE=appdb
+      - DATABASE_URL=postgresql://appuser:apppass@db:5432/appdb
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    container_name: skyscraping-db
+    environment:
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppass
+      - POSTGRES_DB=appdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+
+

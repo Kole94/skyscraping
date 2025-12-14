@@ -214,11 +214,6 @@ async function fetchN1NewsWithContent(list, { concurrency = 5 } = {}) {
   return enriched;
 }
 
-module.exports = {
-  fetchN1NewsList,
-  fetchN1NewsWithContent,
-  fetchArticleDetails,
-  SOURCE_URL,
-};
+module.exports = require('./scraper/index.js');
 
 
