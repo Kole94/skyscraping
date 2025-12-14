@@ -91,6 +91,14 @@ async function listArticles(limit = 20) {
   return rows;
 }
 
+async function listArticleContents(limit = 50) {
+  const lim = Math.min(Math.max(Number(limit) || 50, 1), 1000);
+  const { rows } = await pool.query(
+    `SELECT content FROM articles ORDER BY created_at DESC LIMIT $1`,
+    [lim]
+  );
+  return rows.map((r) => r.content || '');
+}
 async function createUser(name) {
   const { rows } = await pool.query(
     `INSERT INTO users (name) VALUES ($1) RETURNING id, name, created_at`,
@@ -168,6 +176,7 @@ module.exports = {
   initDb,
   upsertArticles,
   listArticles,
+  listArticleContents,
   createUser,
   listUsers,
   addWord,

@@ -7,13 +7,31 @@ async function fetchWords() {
   return res.json();
 }
 
+async function fetchWordStats() {
+  const base = process.env.BACKEND_URL || 'http://localhost:3000';
+  const res = await fetch(`${base}/api/words/stats?limit=20`, { cache: 'no-store' });
+  console.log('re stats', res);
+  if (!res.ok) {
+    return { stats: [] };
+  }
+  return res.json();
+}
+
 export default async function HomePage() {
   let data = { items: [] };
+  let stats = { stats: [] };
   try {
     data = await fetchWords();
   } catch (e) {
     // ignore for simple rendering
   }
+  try {
+    stats = await fetchWordStats();
+  } catch (e) {
+    // ignore stats errors
+  }
+
+  const wordToCount = new Map((stats.stats || []).map((s) => [String(s.word || ''), Number(s.count || 0)]));
 
   return (
     <main>
@@ -38,7 +56,12 @@ export default async function HomePage() {
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {(data.items || []).map((w) => (
           <li key={w.id} style={{ padding: '10px 12px', marginBottom: 8, background: 'white', border: '1px solid #eee', borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>{w.word}</div>
+            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>{w.word}</span>
+              <span style={{ fontSize: 12, color: '#555', background: '#f1f1f1', borderRadius: 999, padding: '2px 8px' }}>
+                {wordToCount.get(String(w.word)) || 0}
+              </span>
+            </div>
             {w.user_name ? (
               <div style={{ color: '#888', fontSize: 12 }}>by {w.user_name}</div>
             ) : null}

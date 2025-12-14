@@ -1,4 +1,4 @@
-const { listAllWords, addWord, getUserById } = require('../db');
+const { listAllWords, addWord, getUserById, listArticleContents } = require('../db');
 const { requireAuth } = require('./auth');
 
 function registerWordsRoutes(app) {
@@ -32,6 +32,46 @@ function registerWordsRoutes(app) {
       // Return a more helpful message in development
       const isProd = process.env.NODE_ENV === 'production';
       res.status(500).json({ error: isProd ? 'Failed to add word' : `Failed to add word: ${err?.message || err}` });
+    }
+  });
+
+  app.get('/api/words/stats', async (req, res) => {
+    try {
+      const limitParam = parseInt(req.query.limit, 10);
+      const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 20;
+
+      const wordsRows = await listAllWords(1000);
+      const words = wordsRows.map((w) => String(w.word || '').trim()).filter(Boolean);
+      if (!words.length) {
+        return res.json({ totalArticles: 0, stats: [] });
+      }
+
+      // Use stored articles from DB for consistent results
+      const contents = (await listArticleContents(limit)).map((c) => String(c || ''));
+      console.log('contents', contents);
+      console.log('words', words);
+
+      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Unicode-aware word boundary using lookarounds and \p{L}\p{N}
+      const makeRegex = (w) => new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(w)}(?![\\p{L}\\p{N}_])`, 'giu');
+      const countMatches = (text, re) => {
+        const m = text.match(re);
+        return m ? m.length : 0;
+      };
+
+      const stats = words.map((w) => {
+        const re = makeRegex(w);
+        let total = 0;
+        for (const content of contents) {
+          total += countMatches(content, re);
+        }
+        return { word: w, count: total };
+      });
+
+      res.json({ totalArticles: contents.length, stats });
+    } catch (err) {
+      console.error('Failed to compute word stats:', err?.message || err);
+      res.status(500).json({ error: 'Failed to compute word stats' });
     }
   });
 }
