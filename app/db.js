@@ -146,6 +146,13 @@ async function listAllWords(limit = 200) {
   return rows;
 }
 
+async function deleteWordById(wordId, userId) {
+  const { rows } = await pool.query(
+    `DELETE FROM words WHERE id = $1 AND user_id = $2 RETURNING id`,
+    [wordId, userId]
+  );
+  return rows.length > 0;
+}
 async function createUserAuth(name, email, passwordHash) {
   const { rows } = await pool.query(
     `INSERT INTO users (name, email, password_hash)
@@ -185,6 +192,7 @@ module.exports = {
   createUserAuth,
   getUserByEmail,
   getUserById,
+  deleteWordById,
   pool,
 };
 

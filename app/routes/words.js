@@ -1,4 +1,4 @@
-const { listAllWords, addWord, getUserById, listArticleContents } = require('../db');
+const { listAllWords, addWord, getUserById, listArticleContents, deleteWordById } = require('../db');
 const { requireAuth } = require('./auth');
 
 function registerWordsRoutes(app) {
@@ -11,6 +11,21 @@ function registerWordsRoutes(app) {
     } catch (err) {
       console.error('Failed to list words:', err?.message || err);
       res.status(500).json({ error: 'Failed to list words' });
+    }
+  });
+
+  app.delete('/api/words/:id', requireAuth, async (req, res) => {
+    try {
+      const idNum = Number(req.params.id);
+      if (!Number.isFinite(idNum) || idNum <= 0) {
+        return res.status(400).json({ error: 'Invalid id' });
+      }
+      const ok = await deleteWordById(idNum, req.user.userId);
+      if (!ok) return res.status(404).json({ error: 'Not found' });
+      return res.status(204).send();
+    } catch (err) {
+      console.error('Failed to delete word:', err?.message || err);
+      res.status(500).json({ error: 'Failed to delete word' });
     }
   });
 

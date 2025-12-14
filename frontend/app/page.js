@@ -61,6 +61,9 @@ export default async function HomePage() {
               <span style={{ fontSize: 12, color: '#555', background: '#f1f1f1', borderRadius: 999, padding: '2px 8px' }}>
                 {wordToCount.get(String(w.word)) || 0}
               </span>
+              <span style={{ marginLeft: 'auto' }}>
+                {require('react').createElement(require('../components/DeleteWordButton').default, { wordId: w.id })}
+              </span>
             </div>
             {w.user_name ? (
               <div style={{ color: '#888', fontSize: 12 }}>by {w.user_name}</div>
