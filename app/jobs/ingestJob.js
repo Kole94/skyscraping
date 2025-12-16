@@ -11,6 +11,9 @@ function startIngestScheduler({ intervalMs, limit, concurrency }) {
     if (ingestRunning) return;
     ingestRunning = true;
     try {
+      console.log(
+        `[ingest] run at=${new Date().toISOString()} intervalMs=${interval} limit=${ingestLimit} concurrency=${ingestConcurrency}`
+      );
       const list = await fetchN1NewsList();
       const sliced = list.slice(0, ingestLimit);
       const items = await fetchN1NewsWithContent(sliced, { concurrency: ingestConcurrency });
@@ -33,6 +36,9 @@ function startIngestScheduler({ intervalMs, limit, concurrency }) {
   }
 
   // Kick off immediately and then schedule
+  console.log(
+    `[ingest] scheduler started intervalMs=${interval} limit=${ingestLimit} concurrency=${ingestConcurrency}`
+  );
   ingestOnce();
   const timer = setInterval(ingestOnce, interval);
   return { stop: () => clearInterval(timer) };

@@ -63,8 +63,6 @@ function registerWordsRoutes(app) {
 
       // Use stored articles from DB for consistent results
       const contents = (await listArticleContents(limit)).map((c) => String(c || ''));
-      console.log('contents', contents);
-      console.log('words', words);
 
       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       // Unicode-aware word boundary using lookarounds and \p{L}\p{N}

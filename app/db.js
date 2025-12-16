@@ -4,7 +4,7 @@ const pool = new Pool({
   // Uses PG* env vars or DATABASE_URL if present
   // PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE are already set in docker-compose
   max: 10,
-  idleTimeoutMillis: 30000,
+  idleTimeoutMillis: 1000,
   connectionTimeoutMillis: 10000,
 });
 

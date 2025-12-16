@@ -10,7 +10,6 @@ async function fetchWords() {
 async function fetchWordStats() {
   const base = process.env.BACKEND_URL || 'http://localhost:3000';
   const res = await fetch(`${base}/api/words/stats?limit=20`, { cache: 'no-store' });
-  console.log('re stats', res);
   if (!res.ok) {
     return { stats: [] };
   }
