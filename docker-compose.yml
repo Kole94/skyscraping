@@ -16,7 +16,7 @@ services:
       - PGDATABASE=appdb
       - DATABASE_URL=postgresql://appuser:apppass@db:5432/appdb
       # CORS origin for frontend and scraping interval (ms)
-      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3001}
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://159.89.30.87:3001}
       - INGEST_INTERVAL_MS=${INGEST_INTERVAL_MS:-300000}
     depends_on:
       - db
