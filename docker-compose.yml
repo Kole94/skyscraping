@@ -4,6 +4,7 @@ services:
   app:
     build: .
     container_name: skyscraping-app
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -24,6 +25,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: skyscraping-db
+    restart: unless-stopped
     environment:
       - POSTGRES_USER=appuser
       - POSTGRES_PASSWORD=apppass
@@ -37,6 +39,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: skyscraping-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      # Public URL used by the browser to call the API (override in prod)
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3000}
+      # Server-side fetches inside Next use the internal service name
+      - BACKEND_URL=${BACKEND_URL:-http://app:3000}
+    depends_on:
+      - app
 
 volumes:
   pgdata:

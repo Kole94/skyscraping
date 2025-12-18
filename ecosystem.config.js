@@ -2,11 +2,13 @@ module.exports = {
   apps: [
     {
       name: 'skyscraping-api',
-      cwd: '/home/konstantin/demo/skyscraping',
+      cwd: '/home/konstantin/skyscraping',
       script: 'app/server.js',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        // Ensure Node resolves local project modules
+        NODE_PATH: '/home/konstantin/skyscraping/node_modules',
         // Postgres (DB container exposed on host 5434)
         PGHOST: '127.0.0.1',
         PGPORT: 5434,
