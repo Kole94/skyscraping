@@ -19,6 +19,11 @@ services:
       # CORS origin for frontend and scraping interval (ms)
       - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://159.89.30.87:3001}
       - INGEST_INTERVAL_MS=${INGEST_INTERVAL_MS:-300000}
+      # Prefer IPv4 DNS results to avoid IPv6 egress issues
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     depends_on:
       - db
 
