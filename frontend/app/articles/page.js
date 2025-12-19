@@ -1,6 +1,6 @@
 async function fetchArticles() {
   const base = process.env.BACKEND_URL || 'http://localhost:3000';
-  const res = await fetch(`${base}/api/articles?limit=50`, { cache: 'no-store' });
+  const res = await fetch(`${base}/api/articles?limit=1000`, { cache: 'no-store' });
   if (!res.ok) {
     throw new Error('Failed to fetch articles');
   }
