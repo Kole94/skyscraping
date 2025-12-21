@@ -35,6 +35,11 @@ async function initDb() {
     `);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_words_user_id ON words (user_id)`);
 
+    // Add declension support columns
+    await client.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS use_declensions BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS declension_patterns JSONB DEFAULT '[]'::jsonb`);
+    await client.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS stemming_enabled BOOLEAN DEFAULT true`);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS articles (
         id BIGSERIAL PRIMARY KEY,
@@ -116,10 +121,13 @@ async function listUsers(limit = 50) {
   return rows;
 }
 
-async function addWord(userId, word) {
+async function addWord(userId, word, options = {}) {
+  const { useDeclensions = false, declensionPatterns = [], stemmingEnabled = true } = options;
   const { rows } = await pool.query(
-    `INSERT INTO words (user_id, word) VALUES ($1, $2) RETURNING id, user_id, word, created_at`,
-    [userId, word]
+    `INSERT INTO words (user_id, word, use_declensions, declension_patterns, stemming_enabled)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, user_id, word, created_at, use_declensions, declension_patterns, stemming_enabled`,
+    [userId, word, useDeclensions, JSON.stringify(declensionPatterns), stemmingEnabled]
   );
   return rows[0] || null;
 }
@@ -136,7 +144,8 @@ async function listUserWords(userId, limit = 50) {
 async function listAllWords(limit = 200) {
   const lim = Math.min(Math.max(Number(limit) || 200, 1), 1000);
   const { rows } = await pool.query(
-    `SELECT w.id, w.word, w.created_at, u.id AS user_id, u.name AS user_name
+    `SELECT w.id, w.word, w.created_at, w.use_declensions, w.declension_patterns, w.stemming_enabled,
+            u.id AS user_id, u.name AS user_name
      FROM words w
      LEFT JOIN users u ON u.id = w.user_id
      ORDER BY w.created_at DESC
@@ -148,7 +157,8 @@ async function listAllWords(limit = 200) {
 
 async function getWordById(wordId) {
   const { rows } = await pool.query(
-    `SELECT w.id, w.word, w.created_at, u.id AS user_id, u.name AS user_name
+    `SELECT w.id, w.word, w.created_at, w.use_declensions, w.declension_patterns, w.stemming_enabled,
+            u.id AS user_id, u.name AS user_name
      FROM words w
      LEFT JOIN users u ON u.id = w.user_id
      WHERE w.id = $1`,

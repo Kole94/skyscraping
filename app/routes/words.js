@@ -1,4 +1,5 @@
 const { listAllWords, addWord, getUserById, listArticleContents, deleteWordById, getWordById, listArticles } = require('../db');
+const { getAllWordForms, createDeclensionRegex } = require('../serbian-utils');
 const { requireAuth } = require('./auth');
 
 function registerWordsRoutes(app) {
@@ -32,16 +33,27 @@ function registerWordsRoutes(app) {
 
   app.post('/api/words', requireAuth, async (req, res) => {
     try {
-      const { word } = req.body || {};
+      const { word, useDeclensions = false, declensionPatterns = [], stemmingEnabled = true } = req.body || {};
       if (!word || typeof word !== 'string' || !word.trim()) {
         return res.status(400).json({ error: 'word is required' });
       }
+
+      // Validate declension patterns if provided
+      if (useDeclensions && (!Array.isArray(declensionPatterns) || declensionPatterns.some(p => typeof p !== 'string'))) {
+        return res.status(400).json({ error: 'declensionPatterns must be an array of strings' });
+      }
+
       // Ensure user still exists (e.g., after DB reset)
       const user = await getUserById(req.user.userId);
       if (!user) {
         return res.status(401).json({ error: 'User not found. Please login again.' });
       }
-      const created = await addWord(req.user.userId, word.trim());
+
+      const created = await addWord(req.user.userId, word.trim(), {
+        useDeclensions,
+        declensionPatterns,
+        stemmingEnabled
+      });
       return res.status(201).json({ item: created });
     } catch (err) {
       console.error('Failed to add word:', err?.message || err);
@@ -57,29 +69,34 @@ function registerWordsRoutes(app) {
       const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 20;
 
       const wordsRows = await listAllWords(1000);
-      const words = wordsRows.map((w) => String(w.word || '').trim()).filter(Boolean);
-      if (!words.length) {
+      if (!wordsRows.length) {
         return res.json({ totalArticles: 0, stats: [] });
       }
 
       // Use stored articles from DB for consistent results
-      const contents = (await listArticleContents(limit)).map((c) => String(c || ''));
+      // For stats, check more articles to get comprehensive results
+      const statsLimit = Math.min(Math.max(limitParam, 1), 100); // Allow up to 100 articles for stats
+      const contents = (await listArticleContents(statsLimit)).map((c) => String(c || ''));
 
-      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Unicode-aware word boundary using lookarounds and \p{L}\p{N}
-      const makeRegex = (w) => new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(w)}(?![\\p{L}\\p{N}_])`, 'giu');
       const countMatches = (text, re) => {
         const m = text.match(re);
         return m ? m.length : 0;
       };
 
-      const stats = words.map((w) => {
-        const re = makeRegex(w);
+      const stats = wordsRows.map((wordRow) => {
+        const wordOptions = {
+          useDeclensions: wordRow.use_declensions,
+          declensionPatterns: wordRow.declension_patterns || [],
+          stemmingEnabled: wordRow.stemming_enabled
+        };
+        const allWordForms = getAllWordForms(wordRow.word, wordOptions);
+        const regex = createDeclensionRegex(wordRow.word, allWordForms.slice(1));
+
         let total = 0;
         for (const content of contents) {
-          total += countMatches(content, re);
+          total += countMatches(content, regex);
         }
-        return { word: w, count: total };
+        return { word: wordRow.word, count: total, declensions: allWordForms.length - 1 };
       });
 
       res.json({ totalArticles: contents.length, stats });
@@ -107,9 +124,16 @@ function registerWordsRoutes(app) {
       // Get articles with their content
       const articles = await listArticles(1000); // Get more articles for better search
 
-      // Search for the word in article content
-      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(word.word)}(?![\\p{L}\\p{N}_])`, 'giu');
+      // Get all forms of the word (including declensions)
+      const wordOptions = {
+        useDeclensions: word.use_declensions,
+        declensionPatterns: word.declension_patterns || [],
+        stemmingEnabled: word.stemming_enabled
+      };
+      const allWordForms = getAllWordForms(word.word, wordOptions);
+
+      // Create regex that matches any form of the word
+      const regex = createDeclensionRegex(word.word, allWordForms.slice(1)); // slice(1) to exclude original word which is already in regex
 
       const appearances = articles
         .map((article) => {
