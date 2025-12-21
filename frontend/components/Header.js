@@ -40,6 +40,7 @@ export default function Header() {
         <Link href="/" style={{ fontWeight: 700, textDecoration: 'none', color: '#111' }}>Skyscraping</Link>
         <Link href="/" style={{ textDecoration: 'none', color: '#333' }}>Words</Link>
         <Link href="/articles" style={{ textDecoration: 'none', color: '#333' }}>Articles</Link>
+        <Link href="/groups" style={{ textDecoration: 'none', color: '#333' }}>Groups</Link>
       </nav>
       <nav style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {!authed ? (

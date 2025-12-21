@@ -1,6 +1,6 @@
 async function fetchArticles() {
   const base = process.env.BACKEND_URL || 'http://localhost:3000';
-  const res = await fetch(`${base}/api/articles?limit=1000`, { cache: 'no-store' });
+  const res = await fetch(`${base}/api/articles?limit=500`, { cache: 'no-store' });
   if (!res.ok) {
     throw new Error('Failed to fetch articles');
   }
@@ -32,11 +32,15 @@ export default async function ArticlesPage() {
                 {a.created_at ? new Date(a.created_at).toLocaleString() : ''}
               </span>
             </div>
-            {a.source ? (
-              <div style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
+              <div style={{ color: '#888', fontSize: 12, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {a.url?.startsWith('https://n1info.rs') && (
+                  <img src="/images/n1.png" alt="N1 Info RS" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                )}
+                {a.url?.startsWith('https://informer.rs') && (
+                  <img src="/images/informer.png" alt="Informer.rs" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                )}
                 {a.source} {a.category ? `· ${a.category}` : ''}
               </div>
-            ) : null}
             {a.content ? (
               <p style={{ margin: '8px 0 0', color: '#333', whiteSpace: 'pre-wrap' }}>
                 {a.content.length > 300 ? `${a.content.slice(0, 300)}…` : a.content}

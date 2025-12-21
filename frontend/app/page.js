@@ -33,6 +33,7 @@ export default async function HomePage() {
   }
 
   const wordToCount = new Map((stats.stats || []).map((s) => [String(s.word || ''), Number(s.count || 0)]));
+  const wordToArticles = new Map((stats.stats || []).map((s) => [String(s.word || ''), Number(s.articles || 0)]));
 
   return (
     <main>
@@ -65,7 +66,7 @@ export default async function HomePage() {
                 <span>{w.word}</span>
               </Link>
               <span style={{ fontSize: 12, color: '#555', background: '#f1f1f1', borderRadius: 999, padding: '2px 8px' }}>
-                {wordToCount.get(String(w.word)) || 0}
+                {wordToCount.get(String(w.word)) || 0} in {wordToArticles.get(String(w.word)) || 0} articles
               </span>
               <span style={{ marginLeft: 'auto' }}>
                 {require('react').createElement(require('../components/DeleteWordButton').default, { wordId: w.id })}
