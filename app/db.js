@@ -146,6 +146,17 @@ async function listAllWords(limit = 200) {
   return rows;
 }
 
+async function getWordById(wordId) {
+  const { rows } = await pool.query(
+    `SELECT w.id, w.word, w.created_at, u.id AS user_id, u.name AS user_name
+     FROM words w
+     LEFT JOIN users u ON u.id = w.user_id
+     WHERE w.id = $1`,
+    [wordId]
+  );
+  return rows[0] || null;
+}
+
 async function deleteWordById(wordId, userId) {
   const { rows } = await pool.query(
     `DELETE FROM words WHERE id = $1 AND user_id = $2 RETURNING id`,
@@ -189,6 +200,7 @@ module.exports = {
   addWord,
   listUserWords,
   listAllWords,
+  getWordById,
   createUserAuth,
   getUserByEmail,
   getUserById,

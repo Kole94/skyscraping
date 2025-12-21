@@ -1,7 +1,8 @@
-const { listAllWords, addWord, getUserById, listArticleContents, deleteWordById } = require('../db');
+const { listAllWords, addWord, getUserById, listArticleContents, deleteWordById, getWordById, listArticles } = require('../db');
 const { requireAuth } = require('./auth');
 
 function registerWordsRoutes(app) {
+  console.log('Registering words routes...');
   app.get('/api/words', async (req, res) => {
     try {
       const limitParam = parseInt(req.query.limit, 10);
@@ -85,6 +86,77 @@ function registerWordsRoutes(app) {
     } catch (err) {
       console.error('Failed to compute word stats:', err?.message || err);
       res.status(500).json({ error: 'Failed to compute word stats' });
+    }
+  });
+
+  console.log('Registering word appearances route...');
+  app.get('/api/words/:id/appearances', async (req, res) => {
+    try {
+      console.log('Word appearances endpoint called with id:', req.params.id);
+      const wordId = parseInt(req.params.id, 10);
+      if (!Number.isFinite(wordId) || wordId <= 0) {
+        return res.status(400).json({ error: 'Invalid word id' });
+      }
+
+      // Get the word details
+      const word = await getWordById(wordId);
+      if (!word) {
+        return res.status(404).json({ error: 'Word not found' });
+      }
+
+      // Get articles with their content
+      const articles = await listArticles(1000); // Get more articles for better search
+
+      // Search for the word in article content
+      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(word.word)}(?![\\p{L}\\p{N}_])`, 'giu');
+
+      const appearances = articles
+        .map((article) => {
+          const matches = article.content ? article.content.match(regex) : null;
+          if (!matches) return null;
+
+          // Get context around each match (up to 200 chars before and after)
+          const contexts = [];
+          let lastIndex = 0;
+          for (const match of matches) {
+            const matchIndex = article.content.indexOf(match, lastIndex);
+            if (matchIndex === -1) continue;
+
+            const start = Math.max(0, matchIndex - 100);
+            const end = Math.min(article.content.length, matchIndex + match.length + 100);
+            const context = article.content.substring(start, end);
+
+            contexts.push({
+              text: context,
+              position: matchIndex
+            });
+
+            lastIndex = matchIndex + match.length;
+          }
+
+          return {
+            article: {
+              id: article.id,
+              title: article.title,
+              url: article.url,
+              created_at: article.created_at
+            },
+            count: matches.length,
+            contexts: contexts.slice(0, 5) // Limit to 5 contexts per article
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.count - a.count); // Sort by count descending
+
+      res.json({
+        word,
+        totalArticles: appearances.length,
+        appearances
+      });
+    } catch (err) {
+      console.error('Failed to get word appearances:', err?.message || err);
+      res.status(500).json({ error: 'Failed to get word appearances' });
     }
   });
 }

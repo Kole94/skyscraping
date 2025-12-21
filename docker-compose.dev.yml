@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: skyscraping-app-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      # For dev, point to external/local DB instead of Docker DB
+      - PGHOST=host.docker.internal
+      - PGPORT=5432
+      - PGUSER=appuser
+      - PGPASSWORD=apppass
+      - PGDATABASE=appdb
+      - DATABASE_URL=postgresql://appuser:apppass@host.docker.internal:5432/appdb
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3001}
+      - INGEST_INTERVAL_MS=${INGEST_INTERVAL_MS:-300000}
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    # No depends_on needed for external DB
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: skyscraping-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3000}
+      - BACKEND_URL=${BACKEND_URL:-http://app:3000}
+    depends_on:
+      - app

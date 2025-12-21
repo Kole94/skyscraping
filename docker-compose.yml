@@ -24,26 +24,26 @@ services:
     dns:
       - 1.1.1.1
       - 8.8.8.8
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
 
-  db:
-    image: postgres:16-alpine
-    container_name: skyscraping-db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=appuser
-      - POSTGRES_PASSWORD=apppass
-      - POSTGRES_DB=appdb
-    ports:
-      - "5434:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: skyscraping-db
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_USER=appuser
+  #     - POSTGRES_PASSWORD=apppass
+  #     - POSTGRES_DB=appdb
+  #   ports:
+  #     - "5434:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
 
   frontend:
     build:
@@ -62,7 +62,7 @@ services:
     depends_on:
       - app
 
-volumes:
-  pgdata:
+# volumes:
+#   pgdata:
 
 

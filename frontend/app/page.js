@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 async function fetchWords() {
   const base = process.env.BACKEND_URL || 'http://localhost:3000';
   const res = await fetch(`${base}/api/words`, { cache: 'no-store' });
@@ -56,7 +58,12 @@ export default async function HomePage() {
         {(data.items || []).map((w) => (
           <li key={w.id} style={{ padding: '10px 12px', marginBottom: 8, background: 'white', border: '1px solid #eee', borderRadius: 8 }}>
             <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{w.word}</span>
+              <Link
+                href={`/word/${w.id}`}
+                style={{ color: '#0070f3', textDecoration: 'none', flex: 1 }}
+              >
+                <span>{w.word}</span>
+              </Link>
               <span style={{ fontSize: 12, color: '#555', background: '#f1f1f1', borderRadius: 999, padding: '2px 8px' }}>
                 {wordToCount.get(String(w.word)) || 0}
               </span>
