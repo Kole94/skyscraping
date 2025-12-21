@@ -29,9 +29,9 @@ module.exports = {
     {
       name: 'skyscraping-web',
       cwd: '/home/konstantin/skyscraping/frontend',
-      // Run the built Next app on 3001
-      script: 'node_modules/next/dist/bin/next',
-      args: 'start -p 3001',
+      // Run the built Next app on 3001 using standalone build
+      script: '.next/standalone/server.js',
+      args: '-p 3001',
       env: {
         NODE_ENV: 'production',
         // Browser calls the API at the backend (public)
