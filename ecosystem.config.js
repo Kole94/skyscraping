@@ -28,7 +28,7 @@ module.exports = {
     },
     {
       name: 'skyscraping-web',
-      cwd: '/home/konstantin/skyscraping/frontend',
+      cwd: '/home/konstantin/demo/skyscraping/frontend',
       // Run the built Next app on 3001 using standalone build
       script: '.next/standalone/server.js',
       args: '-p 3001',
